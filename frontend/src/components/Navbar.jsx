@@ -10,12 +10,12 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-30 bg-sand/80 backdrop-blur-xl border-b border-slate-200">
-      <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-        <Link to="/" className="text-xl font-display font-semibold text-ink">
+      <div className="mx-auto max-w-6xl px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+        <Link to="/" className="text-xl font-display font-semibold text-ink shrink-0">
           Expense AI
         </Link>
         {user ? (
-          <nav className="flex items-center gap-6">
+          <nav className="flex flex-1 flex-wrap items-center justify-end gap-x-5 gap-y-3">
             <NavLink to="/dashboard" className={navClass}>
               Dashboard
             </NavLink>

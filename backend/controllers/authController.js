@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -13,7 +15,12 @@ export const registerUser = async (req, res, next) => {
       res.status(400);
       throw new Error("All fields are required");
     }
-    const existing = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(normalizedEmail)) {
+      res.status(400);
+      throw new Error("Please enter a valid email address");
+    }
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       res.status(400);
       throw new Error("Email already registered");
@@ -21,7 +28,7 @@ export const registerUser = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
-    const user = await User.create({ name, email, password: hashed });
+    const user = await User.create({ name: name.trim(), email: normalizedEmail, password: hashed });
     res.status(201).json({
       id: user._id,
       name: user.name,
@@ -40,7 +47,12 @@ export const loginUser = async (req, res, next) => {
       res.status(400);
       throw new Error("Email and password are required");
     }
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(normalizedEmail)) {
+      res.status(400);
+      throw new Error("Please enter a valid email address");
+    }
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       res.status(401);
       throw new Error("Invalid credentials");

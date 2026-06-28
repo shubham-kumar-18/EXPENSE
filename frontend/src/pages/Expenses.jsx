@@ -7,7 +7,15 @@ const emptyForm = {
   title: "",
   amount: "",
   category: "",
-  date: ""
+  date: new Date().toISOString().slice(0, 10)
+};
+
+const validateExpense = ({ title, amount, category, date }) => {
+  if (!title.trim()) return "Title is required";
+  if (!category.trim()) return "Category is required";
+  if (!date) return "Date is required";
+  if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) return "Amount must be greater than zero";
+  return "";
 };
 
 const Expenses = () => {
@@ -51,17 +59,25 @@ const Expenses = () => {
   };
 
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
     setEditingId(null);
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setError("");
+    const validationError = validateExpense(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setSaving(true);
     try {
       const payload = {
         ...form,
+        title: form.title.trim(),
+        category: form.category.trim(),
         amount: Number(form.amount)
       };
       if (editingId) {
@@ -79,8 +95,13 @@ const Expenses = () => {
   };
 
   const handleDelete = async (id) => {
-    await api.delete(`/api/expenses/${id}`);
-    await load();
+    setError("");
+    try {
+      await api.delete(`/api/expenses/${id}`);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete expense");
+    }
   };
 
   return (
@@ -114,6 +135,7 @@ const Expenses = () => {
               placeholder="Amount"
               type="number"
               min="0"
+              step="0.01"
               name="amount"
               value={form.amount}
               onChange={handleChange}
