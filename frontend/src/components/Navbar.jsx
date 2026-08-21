@@ -37,9 +37,6 @@ const Navbar = () => {
           </nav>
         ) : (
           <nav className="flex items-center gap-4">
-            <NavLink to="/login" className={navClass}>
-              Login
-            </NavLink>
             <NavLink to="/register" className="btn-primary">
               Get Started
             </NavLink>
