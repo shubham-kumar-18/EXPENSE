@@ -6,7 +6,8 @@ const connectDB = async () => {
     throw new Error("MONGO_URI is not set");
   }
   await mongoose.connect(uri, {
-    autoIndex: true
+    autoIndex: true,
+    serverSelectionTimeoutMS: 10000
   });
   console.log("MongoDB connected");
 };

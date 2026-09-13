@@ -26,31 +26,48 @@ const authResponse = (user) => ({
   token: signToken(user._id)
 });
 
-const sendPasswordResetOtp = async (user, otp) => {
-  if (!process.env.SMTP_HOST) {
-    console.log(`Password reset OTP for ${user.email}: ${otp}`);
-    return;
+export const sendPasswordResetOtp = async (user, otp) => {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error("SMTP settings are incomplete");
   }
 
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,
     secure: process.env.SMTP_SECURE === "true",
-    auth:
-      process.env.SMTP_USER && process.env.SMTP_PASS
-        ? {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          }
-        : undefined
+    requireTLS: process.env.SMTP_SECURE !== "true",
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
   });
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to: user.email,
-    subject: "Expense AI password reset OTP",
-    text: `Your Expense AI password reset OTP is ${otp}. It expires in ${otpExpiryMinutes} minutes.`
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"Expense AI" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to: user.email,
+      subject: "Expense AI - Password Reset OTP",
+      text: `Hello ${user.name},
+
+Your Expense AI password reset OTP is:
+
+${otp}
+
+This OTP expires in ${otpExpiryMinutes} minutes.
+
+If you did not request this password reset, please ignore this email.
+
+Expense AI Team`
+    });
+
+    console.log(`Password reset email sent: ${info.messageId}`);
+  } catch (error) {
+    console.error("Password reset email error:", error.message);
+    throw new Error("Unable to send the reset OTP. Please verify the SMTP settings and try again.");
+  }
 };
 
 export const registerUser = async (req, res, next) => {
@@ -65,6 +82,10 @@ export const registerUser = async (req, res, next) => {
       res.status(400);
       throw new Error("Please enter a valid email address");
     }
+    if (password.length < 6) {
+      res.status(400);
+      throw new Error("Password must be at least 6 characters");
+    }
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       res.status(400);
@@ -76,6 +97,10 @@ export const registerUser = async (req, res, next) => {
     const user = await User.create({ name: name.trim(), email: normalizedEmail, password: hashed });
     res.status(201).json(authResponse(user));
   } catch (err) {
+    if (err?.code === 11000) {
+      res.status(400);
+      return next(new Error("Email already registered"));
+    }
     next(err);
   }
 };
@@ -125,10 +150,21 @@ export const requestPasswordReset = async (req, res, next) => {
     const user = await User.findOne({ email: normalizedEmail });
     if (user) {
       const otp = createOtp();
+      const previousOtp = user.passwordResetOtp;
+      const previousExpiry = user.passwordResetExpires;
       user.passwordResetOtp = hashOtp(otp);
       user.passwordResetExpires = new Date(Date.now() + otpExpiryMinutes * 60 * 1000);
       await user.save();
-      await sendPasswordResetOtp(user, otp);
+      try {
+        await sendPasswordResetOtp(user, otp);
+      } catch (error) {
+        user.passwordResetOtp = previousOtp;
+        user.passwordResetExpires = previousExpiry;
+        await user.save();
+        throw error;
+      }
+    } else {
+      console.log(`Password reset requested for unknown email: ${normalizedEmail}`);
     }
 
     res.json({

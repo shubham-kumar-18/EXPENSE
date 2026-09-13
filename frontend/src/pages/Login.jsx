@@ -83,7 +83,10 @@ const Login = () => {
       setResetStep("otp");
       setMessage(data.message || "OTP sent. Check your email.");
     } catch (err) {
-      setError(err.response?.data?.message || "Could not send OTP");
+      setError(
+        err.response?.data?.message ||
+          "Could not reach the backend. Start the backend server, then try again."
+      );
     } finally {
       setLoading(false);
     }

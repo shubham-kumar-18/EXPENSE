@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Expenses from "./pages/Expenses.jsx";
+import LendingTracker from "./pages/LendingTracker.jsx";
 import Analytics from "./pages/Analytics.jsx";
 import AIInsights from "./pages/AIInsights.jsx";
 import Reports from "./pages/Reports.jsx";
@@ -43,6 +44,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Expenses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lending"
+          element={
+            <ProtectedRoute>
+              <LendingTracker />
             </ProtectedRoute>
           }
         />
