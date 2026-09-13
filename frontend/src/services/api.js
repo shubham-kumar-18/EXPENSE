@@ -2,7 +2,7 @@ import axios from "axios";
 
 const apiBaseUrl =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "http://localhost:5002" : "https://expense-backend-8043.onrender.com");
+  (import.meta.env.DEV ? "https://expense-backend-8043.onrender.com" : "https://localhost:5002");
 
 const api = axios.create({
   baseURL: apiBaseUrl
