@@ -85,7 +85,7 @@ const Login = () => {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Could not reach the backend. Start the backend server, then try again."
+          "Could not reach the API. Please try again shortly."
       );
     } finally {
       setLoading(false);

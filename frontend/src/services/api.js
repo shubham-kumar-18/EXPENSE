@@ -1,8 +1,11 @@
 import axios from "axios";
 
-const apiBaseUrl =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "https://expense-backend-8043.onrender.com" : "https://localhost:5002");
+// `localhost` belongs to the person opening the browser.  A production build
+// must therefore always use the publicly deployed API (or an explicitly
+// configured VITE_API_URL), never the visitor's own computer.
+const apiBaseUrl = (
+  import.meta.env.VITE_API_URL || "https://expense-backend-8043.onrender.com"
+).replace(/\/$/, "");
 
 const api = axios.create({
   baseURL: apiBaseUrl

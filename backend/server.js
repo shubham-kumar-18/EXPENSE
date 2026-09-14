@@ -33,7 +33,10 @@ const start = async () => {
   await connectDB();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`Password reset email: ${process.env.SMTP_HOST ? "SMTP configured" : "console fallback"}`);
+    const smtpConfigured = Boolean(
+      process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
+    );
+    console.log(`Password reset email: ${smtpConfigured ? "SMTP configured" : "SMTP not configured"}`);
   });
 };
 
